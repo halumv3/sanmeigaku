@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>算命学メモ占い</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Yomogi&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FBF2E4;
+    --paper: #FFFDF8;
+    --paper-line: #EFE3CE;
+    --ink: #3E3226;
+    --ink-soft: #8A7965;
+    --tape-pink: #F3B8C4;
+    --tape-mint: #B8E0D2;
+    --tape-lavender: #D6C6EC;
+    --tape-butter: #F6E1A9;
+    --accent: #C9895C;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle, #EFE1C9 1px, transparent 1.4px) 0 0/22px 22px,
+      var(--bg);
+    color: var(--ink);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 16px;
+  }
+
+  .stage {
+    width: 100%;
+    max-width: 460px;
+  }
+
+  .card {
+    position: relative;
+    background: var(--paper);
+    border-radius: 22px;
+    padding: 38px 30px 32px;
+    box-shadow: 0 18px 40px -18px rgba(80, 60, 30, 0.35), 0 2px 0 rgba(80,60,30,0.05);
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 33px,
+      var(--paper-line) 33px,
+      var(--paper-line) 34px
+    );
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .tape {
+    position: absolute;
+    width: 88px;
+    height: 30px;
+    opacity: 0.9;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  }
+  .tape.t1 { top: -12px; left: 18px; background: var(--tape-pink); transform: rotate(-7deg); }
+  .tape.t2 { top: -12px; right: 14px; background: var(--tape-mint); transform: rotate(6deg); }
+
+  h1 {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    margin: 10px 0 4px;
+    letter-spacing: 0.02em;
+  }
+
+  .sub {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin: 0 0 26px;
+    line-height: 1.6;
+  }
+
+  label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 18px 0 6px;
+  }
+
+  input[type="date"], textarea {
+    width: 100%;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 0.95rem;
+    padding: 11px 13px;
+    border: 1.5px solid #E7D9BE;
+    border-radius: 12px;
+    background: #FFFEFB;
+    color: var(--ink);
+  }
+  input[type="date"]:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 68px;
+    line-height: 1.6;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .chip {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 0.82rem;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1.5px solid #E7D9BE;
+    background: #FFFEFB;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .chip:hover { transform: translateY(-1px); }
+  .chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #FFF9F0;
+  }
+
+  button.main-btn {
+    width: 100%;
+    margin-top: 26px;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background: var(--ink);
+    color: #FBF2E4;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  button.main-btn:disabled { opacity: 0.55; cursor: default; }
+  button.main-btn:not(:disabled):hover { opacity: 0.88; }
+
+  .error-note {
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: #B24B4B;
+    display: none;
+  }
+
+  /* ---- result view ---- */
+  .result { display: none; }
+
+  .stamp {
+    position: absolute;
+    top: 26px;
+    right: 26px;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 3px solid var(--star-color, var(--accent));
+    color: var(--star-color, var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 900;
+    font-size: 1.15rem;
+    letter-spacing: 0.06em;
+    writing-mode: vertical-rl;
+    transform: rotate(-8deg) scale(0.6);
+    opacity: 0;
+    background: rgba(255,255,255,0.5);
+  }
+  .stamp.show {
+    animation: stampDown 0.5s cubic-bezier(.2,1.4,.4,1) forwards;
+  }
+  @keyframes stampDown {
+    0%   { opacity: 0; transform: rotate(-8deg) scale(1.9); }
+    70%  { opacity: 1; transform: rotate(-8deg) scale(0.92); }
+    100% { opacity: 1; transform: rotate(-8deg) scale(1); }
+  }
+
+  .star-badge {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: var(--star-color, var(--accent));
+    color: #FFFBF2;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .star-name {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 900;
+    font-size: 1.7rem;
+    margin: 0 0 2px;
+  }
+
+  .star-reading {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+  }
+
+  .trait-row {
+    font-size: 0.85rem;
+    color: var(--ink);
+    background: #FBF2E4;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    line-height: 1.7;
+  }
+  .trait-row b { color: var(--star-color, var(--accent)); }
+
+  .divider {
+    border: none;
+    border-top: 1.5px dashed #E7D9BE;
+    margin: 22px 0 18px;
+  }
+
+  .advice-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Yomogi', cursive;
+    font-size: 1.05rem;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .advice-text {
+    font-size: 0.94rem;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    min-height: 60px;
+  }
+
+  .loading-text {
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+
+  .again-btn {
+    margin-top: 22px;
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+  }
+
+  .datestamp {
+    position: absolute;
+    bottom: 22px;
+    right: 30px;
+    font-family: 'Yomogi', cursive;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    opacity: 0.8;
+    transform: rotate(-4deg);
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="card" id="card">
+    <div class="tape t1"></div>
+    <div class="tape t2"></div>
+
+    <div id="formView">
+      <h1>算命学メモ占い</h1>
+      <p class="sub">生まれた日と、気になる日を入れてね。今のあなたの星と、その日に向けて進む方向のヒントをメモしてお渡しします。</p>
+
+      <label for="birthdate">生年月日</label>
+      <input type="date" id="birthdate">
+
+      <label for="targetdate">気になる日付（未入力なら今日）</label>
+      <input type="date" id="targetdate">
+
+      <label>気になっていること</label>
+      <div class="chips" id="chips">
+        <div class="chip" data-v="恋愛・パートナーシップ">恋愛</div>
+        <div class="chip" data-v="仕事・キャリア">仕事</div>
+        <div class="chip" data-v="お金">お金</div>
+        <div class="chip" data-v="人間関係">人間関係</div>
+        <div class="chip" data-v="健康・体調">健康</div>
+        <div class="chip" data-v="自分の性格・生き方">自分自身のこと</div>
+      </div>
+
+      <label for="detail">もう少し具体的に（書けたら）</label>
+      <textarea id="detail" placeholder="例：転職しようか迷っている、最近すれ違いが多い、など"></textarea>
+
+      <button class="main-btn" id="submitBtn">占ってもらう</button>
+      <p class="error-note" id="errorNote">生年月日を入力してね。</p>
+    </div>
+
+    <div class="result" id="resultView">
+      <div class="stamp" id="stamp">星</div>
+      <div class="star-badge" id="elementBadge">木の星</div>
+      <div class="star-name" id="starName">貫索星</div>
+      <div class="star-reading" id="starReading">かんさくせい</div>
+
+      <div class="trait-row"><b>持ち味：</b><span id="traitText"></span></div>
+      <div class="trait-row"><b>その日との相性：</b><span id="dayRelationText"></span></div>
+
+      <hr class="divider">
+
+      <div class="advice-label">✎ 占い師からのメモ</div>
+      <div class="advice-text" id="adviceText"><span class="loading-text">占っています…</span></div>
+
+      <button class="again-btn" id="againBtn">もう一度占う</button>
+      <div class="datestamp" id="dateStamp"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- 干支・十大主星 計算 ---------------- */
+
+const STEMS = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+const BRANCHES = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+
+const STARS = [
+  { name:"貫索星", reading:"かんさくせい", element:"木", color:"#7FA85C",
+    trait:"自分の考えを大切にし、一度決めたことをやり抜く芯の強さ", caution:"人に頼るのが苦手で、一人で抱え込みやすいところ" },
+  { name:"石門星", reading:"せきもんせい", element:"木", color:"#A9C98A",
+    trait:"人と人をつなぐのが得意で、周りに自然と仲間が集まる社交性", caution:"良い顔をしすぎて、自分の本音を後回しにしやすいところ" },
+  { name:"鳳閣星", reading:"ほうかくせい", element:"火", color:"#EE8358",
+    trait:"物事を明るく捉え、その場の空気をふっと軽くする力", caution:"計画を立てるより先に動いてしまいやすいところ" },
+  { name:"調舒星", reading:"ちょうじょせい", element:"火", color:"#F5AA8C",
+    trait:"感受性が豊かで、独自の美意識やセンスで人を惹きつける魅力", caution:"気分の波が出やすく、一人の時間が必要になるところ" },
+  { name:"禄存星", reading:"ろくぞんせい", element:"土", color:"#C99530",
+    trait:"面倒見が良く、困っている人にそっと手を差し伸べるやさしさ", caution:"人を優先しすぎて、自分を後回しにしがちなところ" },
+  { name:"司禄星", reading:"しろくせい", element:"土", color:"#E3BE72",
+    trait:"コツコツ積み上げる堅実さと、暮らしを整える現実的な感覚", caution:"慎重になりすぎて一歩が踏み出しにくいところ" },
+  { name:"車騎星", reading:"しゃきせい", element:"金", color:"#94A0B0",
+    trait:"迷いを長く引きずらず、まっすぐ前に進んでいく行動力", caution:"勢いで動きすぎて、周りが見えづらくなるところ" },
+  { name:"牽牛星", reading:"けんぎゅうせい", element:"金", color:"#BFC8D3",
+    trait:"筋を通すことを大事にし、責任をもって物事をやり遂げる力", caution:"意地を張って、引くタイミングを逃しやすいところ" },
+  { name:"龍高星", reading:"りゅうこうせい", element:"水", color:"#4F86AA",
+    trait:"探究心が強く、独自の視点で新しい道を切りひらく発想力", caution:"興味が移りやすく、一つのことに落ち着きにくいところ" },
+  { name:"玉堂星", reading:"ぎょくどうせい", element:"水", color:"#8FBBD6",
+    trait:"学び、知り、蓄えた知識で物事を静かに判断していく知性", caution:"考えすぎて、動き出す前に足が止まってしまうところ" },
+];
+
+function toJDN(y, m, d) {
+  const a = Math.floor((14 - m) / 12);
+  const yy = y + 4800 - a;
+  const mm = m + 12 * a - 3;
+  return d + Math.floor((153 * mm + 2) / 5) + 365 * yy + Math.floor(yy / 4) - Math.floor(yy / 100) + Math.floor(yy / 400) - 32045;
+}
+
+function mod(n, m) { return ((n % m) + m) % m; }
+
+function dayStemBranch(dateObj) {
+  const jdn = toJDN(dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate());
+  const idx = mod(jdn + 49, 60);
+  return { stemIdx: idx % 10, branchIdx: idx % 12 };
+}
+
+function yearStemBranch(year) {
+  return { stemIdx: mod(year - 4, 10), branchIdx: mod(year - 4, 12) };
+}
+
+function relationStarIndex(dayStemIdx, otherStemIdx) {
+  const dElem = Math.floor(dayStemIdx / 2), dYY = dayStemIdx % 2;
+  const oElem = Math.floor(otherStemIdx / 2), oYY = otherStemIdx % 2;
+  const same = dYY === oYY;
+  if (oElem === dElem) return same ? 0 : 1;
+  if (oElem === mod(dElem + 1, 5)) return same ? 2 : 3;
+  if (oElem === mod(dElem + 2, 5)) return same ? 4 : 5;
+  if (oElem === mod(dElem + 3, 5)) return same ? 6 : 7;
+  return same ? 8 : 9;
+}
+
+/* ---------------- UI ---------------- */
+
+let selectedKeyword = "";
+
+document.getElementById("chips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  selectedKeyword = chip.dataset.v;
+});
+
+document.getElementById("submitBtn").addEventListener("click", async () => {
+  const birthVal = document.getElementById("birthdate").value;
+  const errorNote = document.getElementById("errorNote");
+  if (!birthVal) {
+    errorNote.style.display = "block";
+    return;
+  }
+  errorNote.style.display = "none";
+
+  const targetVal = document.getElementById("targetdate").value;
+  const detail = document.getElementById("detail").value.trim();
+
+  const birthDate = new Date(birthVal + "T00:00:00");
+  const targetDate = targetVal ? new Date(targetVal + "T00:00:00") : new Date();
+
+  const birthYearGZ = yearStemBranch(birthDate.getFullYear());
+  const birthDayGZ = dayStemBranch(birthDate);
+  const coreStarIdx = relationStarIndex(birthDayGZ.stemIdx, birthYearGZ.stemIdx);
+
+  const targetDayGZ = dayStemBranch(targetDate);
+  const dayRelationIdx = relationStarIndex(birthDayGZ.stemIdx, targetDayGZ.stemIdx);
+
+  const core = STARS[coreStarIdx];
+  const relation = STARS[dayRelationIdx];
+
+  renderResult(core, relation, birthDayGZ, targetDayGZ, targetDate, selectedKeyword, detail);
+  await fetchAdvice(core, relation, selectedKeyword, detail, targetDate);
+});
+
+document.getElementById("againBtn").addEventListener("click", () => {
+  document.getElementById("resultView").style.display = "none";
+  document.getElementById("formView").style.display = "block";
+  document.getElementById("stamp").classList.remove("show");
+});
+
+function renderResult(core, relation, birthDayGZ, targetDayGZ, targetDate, keyword, detail) {
+  document.getElementById("formView").style.display = "none";
+  const resultView = document.getElementById("resultView");
+  resultView.style.display = "block";
+
+  document.getElementById("card").style.setProperty("--star-color", core.color);
+  document.getElementById("elementBadge").textContent = core.element + "の星";
+  document.getElementById("starName").textContent = core.name;
+  document.getElementById("starReading").textContent = core.reading;
+  document.getElementById("traitText").textContent = core.trait + "があります。";
+  document.getElementById("dayRelationText").textContent =
+    `気になる日は「${relation.name}」の気配。${relation.trait}が後押ししてくれそうな日です。`;
+
+  const stamp = document.getElementById("stamp");
+  stamp.textContent = core.name.slice(0, 2);
+  stamp.classList.remove("show");
+  void stamp.offsetWidth;
+  stamp.classList.add("show");
+
+  const y = targetDate.getFullYear(), m = targetDate.getMonth() + 1, d = targetDate.getDate();
+  document.getElementById("dateStamp").textContent =
+    `${y}.${String(m).padStart(2,"0")}.${String(d).padStart(2,"0")} 占`;
+
+  document.getElementById("adviceText").innerHTML = '<span class="loading-text">占っています…</span>';
+}
+
+async function fetchAdvice(core, relation, keyword, detail, targetDate) {
+  const adviceEl = document.getElementById("adviceText");
+  adviceEl.textContent = fallbackAdvice(core, relation, keyword);
+}
+
+function fallbackAdvice(core, relation, keyword) {
+  const topic = keyword || "今気になっていること";
+  return `${core.name}のあなたは、${core.trait}が持ち味。${topic}については、その力を信じて一歩を選んでみてよさそうです。ただ${core.caution}という面もあるので、抱え込みすぎず、周りにも少し頼りながら進めてみてください。気になる日は「${relation.name}」の気配もあるので、${relation.trait}を意識すると、流れが少し軽くなるはずです。`;
+}
+</script>
+</body>
+</html>
