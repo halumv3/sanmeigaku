@@ -1,3 +1,4 @@
+cat > /home/claude/sanmeigaku-fortune-gemini-v2.html << 'HTMLEOF'
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -177,7 +178,6 @@
     display: none;
   }
 
-  /* ---- result ---- */
   .result { display: none; }
 
   .constellation-wrap {
@@ -363,10 +363,8 @@
 </div>
 
 <script>
-// Lambda関数URLを指定（ここを変更してください）
 const LAMBDA_URL = "https://6hd5hnbehegxruqfswufyqqjiu0fpmrk.lambda-url.ap-northeast-1.on.aws/";
 
-/* ============ 目盛り描画 ============ */
 (function drawTicks() {
   const g = document.getElementById("tickGroup");
   for (let i = 0; i < 12; i++) {
@@ -381,8 +379,6 @@ const LAMBDA_URL = "https://6hd5hnbehegxruqfswufyqqjiu0fpmrk.lambda-url.ap-north
     g.appendChild(line);
   }
 })();
-
-/* ============ 干支・十大主星 計算 ============ */
 
 const STEMS = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
 const BRANCHES = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
@@ -425,7 +421,6 @@ function toJDN(y, m, d) {
   return d + Math.floor((153 * mm + 2) / 5) + 365 * yy + Math.floor(yy / 4) - Math.floor(yy / 100) + Math.floor(yy / 400) - 32045;
 }
 function mod(n, m) { return ((n % m) + m) % m; }
-
 function dayStemBranch(dateObj) {
   const jdn = toJDN(dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate());
   const idx = mod(jdn + 49, 60);
@@ -444,8 +439,6 @@ function relationStarIndex(dayStemIdx, otherStemIdx) {
   if (oElem === mod(dElem + 3, 5)) return same ? 6 : 7;
   return same ? 8 : 9;
 }
-
-/* ============ UI ============ */
 
 let selectedKeyword = "";
 
@@ -565,6 +558,7 @@ phrase を書く条件:
 - 相談内容の核心を捉えた、記憶に残る短い一言（スローガンのような強さでよい）`;
 
   try {
+    console.log("Sending request to Lambda...");
     const response = await fetch(LAMBDA_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -573,14 +567,26 @@ phrase を書く条件:
       })
     });
 
-    if (!response.ok) throw new Error("API error " + response.status);
+    console.log("Response status:", response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
     const data = await response.json();
+    console.log("Response data:", data);
     
-    // GeminiのレスポンスはLambda経由で json形式で返ってくる
     const text = data.content?.[0]?.text || "";
+    console.log("Text from response:", text);
+    
+    if (!text) throw new Error("No text in response");
+    
     const cleaned = text.replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
+    console.log("Cleaned text:", cleaned);
+    
     const parsed = JSON.parse(cleaned);
-    if (!parsed.body) throw new Error("empty body");
+    console.log("Parsed JSON:", parsed);
+    
+    if (!parsed.body) throw new Error("No body in parsed response");
 
     if (parsed.phrase) {
       phraseEl.textContent = "「" + parsed.phrase + "」";
@@ -588,7 +594,7 @@ phrase を書く条件:
     }
     adviceEl.textContent = parsed.body;
   } catch (err) {
-    console.error("Error:", err);
+    console.error("Error in fetchAdvice:", err);
     const fb = fallbackAdvice(core, relation, keyword, detail);
     phraseEl.textContent = "「" + fb.phrase + "」";
     phraseEl.style.display = "block";
@@ -607,3 +613,9 @@ function fallbackAdvice(core, relation, keyword, detail) {
 </script>
 </body>
 </html>
+HTMLEOF
+cp /home/claude/sanmeigaku-fortune-gemini-v2.html /mnt/user-data/outputs/sanmeigaku-fortune-gemini-v2.html
+echo done
+出力
+
+done
